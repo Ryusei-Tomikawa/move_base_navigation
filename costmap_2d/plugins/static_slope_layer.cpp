@@ -48,9 +48,14 @@
 
 PLUGINLIB_EXPORT_CLASS(costmap_2d::StaticSlopeLayer, costmap_2d::Layer)
 
+// 255
 using costmap_2d::NO_INFORMATION;
+// 254
 using costmap_2d::LETHAL_OBSTACLE;
+// 0
 using costmap_2d::FREE_SPACE;
+
+// INSCRIBED_INFLATED_OBSTACLE = 253;
 
 namespace costmap_2d
 {
@@ -213,6 +218,8 @@ double StaticSlopeLayer::translate(unsigned int i, int leftmin, int leftmax, dou
 }
 
 // ここで作成したマップをもらっている→ここを2.5DMapに変更する
+// 斜面コストマップを作成する
+// 具体的には,スロープ部分のコスト値が付加されたコストマップを作成する
 // void StaticSlopeLayer::incomingMap(const nav_msgs::OccupancyGridConstPtr& new_map)
 void StaticSlopeLayer::incomingPointCloudMap(const sensor_msgs::PointCloud2ConstPtr& new_map)
 {
@@ -260,20 +267,14 @@ void StaticSlopeLayer::incomingPointCloudMap(const sensor_msgs::PointCloud2Const
   unsigned int index = 0;
 
   unsigned char value; 
-  unsigned int x;
-  unsigned int y;
-  // x = translate(i, 40, lim_x-1, origin_x, abs(origin_x))
-  // y = translate(j, 15, lim_y-1, origin_y, abs(origin_y)) #use float(j) or translate(j,0,lim_x-1,origin_y,abs(origin_y))
   // mapping.pyの方を調整してみること
   // initialize the costmap with static data
   for (unsigned int i = 0; i < size_x; i++)
   {
     for (unsigned int j = 0; j < size_y; j++)
     { 
-      // x = translate(i, 40, size_x - 1, origin_position_x, abs(origin_position_x));
-      // y = translate(j, 15, size_y - 1, origin_position_y, abs(origin_position_y));
       // rgb値によって値を変化させる
-      // 高さの値によってコスト値を変化させる 0 = ピンク色 100 = 青色 -1 = 無色
+      // 高さの値によってコスト値を変化させる 0 = 黒 255= 白 155 = 灰色
       if (cloud_.points[MAP_IDX(size_x, i, j)].r == 0 && cloud_.points[MAP_IDX(size_x, i, j)].g == 0 && cloud_.points[MAP_IDX(size_x, i, j)].b == 0 )
         value = 100;
       else if (cloud_.points[MAP_IDX(size_x, i, j)].r == 255 && cloud_.points[MAP_IDX(size_x, i, j)].g == 255 && cloud_.points[MAP_IDX(size_x, i, j)].b == 255)
@@ -281,10 +282,14 @@ void StaticSlopeLayer::incomingPointCloudMap(const sensor_msgs::PointCloud2Const
       else if(cloud_.points[MAP_IDX(size_x, i, j)].r == 155 && cloud_.points[MAP_IDX(size_x, i, j)].g == 155 && cloud_.points[MAP_IDX(size_x, i, j)].b == 155)    
         value = -1;
       
-      // costmap_[MAP_IDX(size_x, i, j)] = interpretValue(value);
-
       // unsigned char value = new_map->data[index];
+      // 占有情報をコスト値に変換し,コストマップに付加している costmap_ = Costmap2Dのオブジェクト
       costmap_[index] = interpretValue(value);
+      
+      // tomikawa add
+      // 高さ情報をコスト値に変換し、コストマップに付加する 
+      if (cloud_.points[MAP_IDX(size_x, i, j)].z > 0.04 && cloud_.points[MAP_IDX(size_x, i, j)].r == 255 && cloud_.points[MAP_IDX(size_x, i, j)].g == 255 && cloud_.points[MAP_IDX(size_x, i, j)].b == 255)
+        costmap_[index] = cloud_.points[MAP_IDX(size_x, i, j)].z  * 750;
       ++index;
     }
   }
