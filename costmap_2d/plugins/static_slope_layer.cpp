@@ -274,7 +274,7 @@ void StaticSlopeLayer::incomingPointCloudMap(const sensor_msgs::PointCloud2Const
     for (unsigned int j = 0; j < size_y; j++)
     { 
       // rgb値によって値を変化させる
-      // 高さの値によってコスト値を変化させる 0 = 黒 255= 白 155 = 灰色
+      // 高さの値によってコスト値を変化させる 0 = 黒 255 = 白 155 = 灰色
       if (cloud_.points[MAP_IDX(size_x, i, j)].r == 0 && cloud_.points[MAP_IDX(size_x, i, j)].g == 0 && cloud_.points[MAP_IDX(size_x, i, j)].b == 0 )
         value = 100;
       else if (cloud_.points[MAP_IDX(size_x, i, j)].r == 255 && cloud_.points[MAP_IDX(size_x, i, j)].g == 255 && cloud_.points[MAP_IDX(size_x, i, j)].b == 255)
@@ -290,6 +290,8 @@ void StaticSlopeLayer::incomingPointCloudMap(const sensor_msgs::PointCloud2Const
       // 高さ情報をコスト値に変換し、コストマップに付加する 
       if (cloud_.points[MAP_IDX(size_x, i, j)].z > 0.04 && cloud_.points[MAP_IDX(size_x, i, j)].r == 255 && cloud_.points[MAP_IDX(size_x, i, j)].g == 255 && cloud_.points[MAP_IDX(size_x, i, j)].b == 255)
         costmap_[index] = cloud_.points[MAP_IDX(size_x, i, j)].z  * 750;
+      else if (cloud_.points[MAP_IDX(size_x, i, j)].z == 0 && cloud_.points[MAP_IDX(size_x, i, j)].r == 255 && cloud_.points[MAP_IDX(size_x, i, j)].g == 255 && cloud_.points[MAP_IDX(size_x, i, j)].b == 255)
+        costmap_[index] = 100;
       ++index;
     }
   }
